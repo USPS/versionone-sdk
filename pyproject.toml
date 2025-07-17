@@ -1,5 +1,5 @@
 [project]
-name = "versionone"
+name = "versionone-sdk"
 version = "0.1.0"
 description = "VersionOne SDK"
 readme = "README.md"
