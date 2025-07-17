@@ -33,7 +33,7 @@ with V1Meta(
 
   user = v1.Member(20) # internal numeric ID
   
-  print user.CreateDate, user.Name
+  print(user.CreateDate, user.Name)
 ```
 
 ### Simple access to individual assets:
@@ -48,7 +48,7 @@ with V1Meta(
   
       s = v1.asset_from_oid('Story:1005')
       
-      print s is v1.Story(1005)   # True
+      print(s == v1.Story(1005))   # True
 
 
 ### Lazyily loaded values and relations:
