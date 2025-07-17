@@ -1,4 +1,4 @@
-from v1pysdk import V1Meta
+from versionone import V1Meta
 import os
 
 with V1Meta(

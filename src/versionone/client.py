@@ -46,15 +46,15 @@ class V1Server(object):
       self.scheme = scheme
       self.instance_url = self.build_url('')
 
-    modulelogname='v1pysdk.client'
+    modulelogname='versionone-sdk.client'
     logname = "%s.%s" % (logparent, modulelogname) if logparent else None
     self.logger = logging.getLogger(logname)
     self.logger.setLevel(loglevel)
     self.username = username
     self.password = password
     self.token = token
-    self._init_client()
     self.verify = verify
+    self._init_client()
         
 
   def _init_client(self):
