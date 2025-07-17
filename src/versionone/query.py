@@ -17,6 +17,7 @@ class V1Query(object):
     self.sel_string = sel_string
     self.empty_sel = sel_string is None
     self.where_string = filterexpr
+    self.postdata = None
     
   def __iter__(self):
     "Iterate over the results."
@@ -37,11 +38,15 @@ class V1Query(object):
           terms.append(self.where_string)
       return ';'.join(terms)
             
-  def run_single_query(self, url_params={}, api="Data"):
-      urlquery = urlencode(url_params)
-      urlpath = '/rest-1.v1/{1}/{0}'.format(self.asset_class._v1_asset_type_name, api)
-      # warning: tight coupling ahead
-      xml = self.asset_class._v1_v1meta.server.get_xml(urlpath, query=urlquery)
+  def run_single_query(self, url_params={}, api="Data", query=False):
+      if query:
+        urlpath = '/query.v1'
+        xml = self.asset_class._v1_v1meta.server.get_xml(urlpath, postdata=self.postdata, dtype='json')
+      else:
+        urlquery = urlencode(url_params)
+        urlpath = '/rest-1.v1/{1}/{0}'.format(self.asset_class._v1_asset_type_name, api)
+        # warning: tight coupling ahead
+        xml = self.asset_class._v1_v1meta.server.get_xml(urlpath, query=urlquery, postdata=self.postdata)
       return xml
       
   def run_query(self):
@@ -61,6 +66,9 @@ class V1Query(object):
           api = "Data"
         xml = self.run_single_query(url_params, api=api)
         self.query_results.append((xml, asof))
+    if self.postdata is not None:
+      xml = self.run_single_query(url_params, query=True)
+      self.query_results.append((xml, None))
     else:
       xml = self.run_single_query(url_params)
       self.query_results.append((xml, None))
@@ -90,6 +98,10 @@ class V1Query(object):
   def filter(self, filterexpr):
     self.where_string = filterexpr
     return self
+  
+  def find(self, postdata):
+     self.postdata = postdata
+     return self
     
   def asof(self, *asofs):
       for asof_list in asofs:

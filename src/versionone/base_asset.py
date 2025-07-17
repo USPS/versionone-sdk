@@ -29,7 +29,11 @@ class BaseAsset(object, metaclass=IterableType):
   @classmethod
   def filter(Class, filterexpr):
       return V1Query(Class).filter(filterexpr)
-    
+  
+  @classmethod
+  def find(Class, postdata):
+      return V1Query(Class).find(postdata)
+
   @classmethod
   def asof(Class, *asofs):
       return V1Query(Class).asof(*asofs)

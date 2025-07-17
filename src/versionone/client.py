@@ -71,9 +71,14 @@ class V1Server(object):
     response = self.client.get(url)
     response.raise_for_status()
     return response
-  
-  def http_post(self, url, data=''):
-    response = self.client.post(url, content=data)
+
+  def http_post(self, url, data: str | dict='', dtype='xml'):
+    if dtype == 'json':
+      self.client.headers['Content-Type'] = 'application/json;charset=UTF-8'
+      response = self.client.post(url, json=data)
+    else:
+      self.client.headers['Content-Type'] = 'text/xml;charset=UTF-8'
+      response = self.client.post(url, content=data)
     response.raise_for_status()
     return response
     
@@ -104,7 +109,7 @@ class V1Server(object):
     else:
       self.logger.debug("Body: non-textual content (Content-Type: %s). Not logged." % ctype)
 
-  def fetch(self, path, query=None, postdata=None):
+  def fetch(self, path, query=None, postdata=None, dtype='xml'):
     "Perform an HTTP GET or POST depending on whether postdata is present"
     # Accept query as None, str, or dict
     if query is None:
@@ -116,10 +121,10 @@ class V1Server(object):
     self.logger.debug("URL: %s" % url)
     try:
       if postdata is not None:
-        if isinstance(postdata, dict):
+        if isinstance(postdata, dict) and dtype != 'json':
           postdata = urlencode(postdata)
           self.logger.debug("postdata: %s" % postdata)
-        response = self.http_post(url, postdata)
+        response = self.http_post(url, postdata, dtype=dtype)
       else:
         response = self.http_get(url)
       body = response.text
@@ -145,11 +150,11 @@ class V1Server(object):
         self.logger.error(postdata)
       raise exception
 
-  def get_xml(self, path, query=None, postdata=None):
+  def get_xml(self, path, query=None, postdata=None, dtype='xml'):
     verb = "HTTP POST to " if postdata else "HTTP GET from "
     msg = verb + path
     self.logger.info(msg)
-    exception, body = self.fetch(path, query=query, postdata=postdata)
+    exception, body = self.fetch(path, query=query, postdata=postdata, dtype=dtype)
     if exception:
       self.handle_non_xml_response(body, exception, msg, postdata)
       self.logger.warn("{0} during {1}".format(exception, msg))
