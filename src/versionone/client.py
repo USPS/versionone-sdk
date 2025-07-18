@@ -1,4 +1,5 @@
 import logging, time, base64
+import json
 import httpx
 from urllib.parse import urlencode, urlunparse, urlparse
 
@@ -150,11 +151,11 @@ class V1Server(object):
         self.logger.error(postdata)
       raise exception
 
-  def get_xml(self, path, query=None, postdata=None, dtype='xml'):
+  def get_xml(self, path, query=None, postdata=None):
     verb = "HTTP POST to " if postdata else "HTTP GET from "
     msg = verb + path
     self.logger.info(msg)
-    exception, body = self.fetch(path, query=query, postdata=postdata, dtype=dtype)
+    exception, body = self.fetch(path, query=query, postdata=postdata)
     if exception:
       self.handle_non_xml_response(body, exception, msg, postdata)
       self.logger.warn("{0} during {1}".format(exception, msg))
@@ -169,6 +170,21 @@ class V1Server(object):
         raise V1Error('\n'+body)
       else:
         raise V1Error(exception)
+    return document
+  
+  def get_json(self, path, query=None, postdata=None):
+    verb = "HTTP POST to " if postdata else "HTTP GET from "
+    msg = verb + path
+    self.logger.info(msg)
+    exception, body = self.fetch(path, query=query, postdata=postdata, dtype='json')
+    if exception:
+      self.handle_non_xml_response(body, exception, msg, postdata)
+      self.logger.warn("{0} during {1}".format(exception, msg))
+      if postdata is not None:
+        self.logger.warn(postdata)
+    document = json.loads(body)
+    while type(document) == list and len(document) == 1 and type(document[0]) != dict:
+      document = document[0]
     return document
    
   def get_asset_xml(self, asset_type_name, oid, moment=None):

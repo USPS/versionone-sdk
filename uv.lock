@@ -194,8 +194,8 @@ wheels = [
 ]
 
 [[package]]
-name = "versionone-sdk"
-version = "0.1.0"
+name = "versionone"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

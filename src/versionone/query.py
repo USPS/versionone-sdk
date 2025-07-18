@@ -24,8 +24,11 @@ class V1Query(object):
     if not self.query_has_run:
       self.run_query()
     for (result, asof) in self.query_results:
-      for found_asset in result.findall('Asset'):
-        yield self.asset_class.from_query_select(found_asset, asof)
+      if result.tag == 'Asset':
+        yield self.asset_class.from_query_select(result, asof)
+      else:
+        for found_asset in result.findall('Asset'):
+          yield self.asset_class.from_query_select(found_asset, asof)
       
   def get_sel_string(self):
       if self.sel_string:
@@ -41,7 +44,8 @@ class V1Query(object):
   def run_single_query(self, url_params={}, api="Data", query=False):
       if query:
         urlpath = '/query.v1'
-        xml = self.asset_class._v1_v1meta.server.get_xml(urlpath, postdata=self.postdata, dtype='json')
+        oid_list = self.asset_class._v1_v1meta.server.get_json(urlpath, postdata=self.postdata)
+        return oid_list
       else:
         urlquery = urlencode(url_params)
         urlpath = '/rest-1.v1/{1}/{0}'.format(self.asset_class._v1_asset_type_name, api)
@@ -52,26 +56,30 @@ class V1Query(object):
   def run_query(self):
     "Actually hit the server to perform the query"
     url_params = {}
-    if self.get_sel_string() or self.empty_sel:
-      url_params['sel'] = self.get_sel_string()
-    if self.get_where_string():
-      url_params['where'] = self.get_where_string()
-    if self.asof_list:
-      for asof in self.asof_list:
-        if asof:
-          url_params['asof'] = str(asof)
-          api = "Hist"
-        else:
-          del url_params['asof']
-          api = "Data"
-        xml = self.run_single_query(url_params, api=api)
-        self.query_results.append((xml, asof))
     if self.postdata is not None:
-      xml = self.run_single_query(url_params, query=True)
-      self.query_results.append((xml, None))
+      oid_list = self.run_single_query(url_params, query=True)
+      oid_list = [oid.get('_oid').split(":")[1] for oid in oid_list if '_oid' in oid]
+      for oid in oid_list:
+        self.query_results.append((self.asset_class._v1_v1meta.server.get_asset_xml(self.asset_class._v1_asset_type_name, oid), None))
+      # print(self.query_results)
     else:
-      xml = self.run_single_query(url_params)
-      self.query_results.append((xml, None))
+      if self.get_sel_string() or self.empty_sel:
+        url_params['sel'] = self.get_sel_string()
+      if self.get_where_string():
+        url_params['where'] = self.get_where_string()
+      if self.asof_list:
+        for asof in self.asof_list:
+          if asof:
+            url_params['asof'] = str(asof)
+            api = "Hist"
+          else:
+            del url_params['asof']
+            api = "Data"
+          xml = self.run_single_query(url_params, api=api)
+          self.query_results.append((xml, asof))
+      else:
+        xml = self.run_single_query(url_params)
+        self.query_results.append((xml, None))
     self.query_has_run = True
     
   def select(self, *args, **kw):
@@ -100,6 +108,8 @@ class V1Query(object):
     return self
   
   def find(self, postdata):
+     if postdata.get('from', None) is None:
+         postdata['from'] = self.asset_class._v1_asset_type_name
      self.postdata = postdata
      return self
     
