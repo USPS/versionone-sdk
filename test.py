@@ -30,13 +30,11 @@ with V1Meta(
   ) as v1:
     # story = v1.asset_from_oid("Story:9135051")
     # story = v1.Story.where(Name="Expand Version one MCP server capabilities to support additional operations, BNS0208224")
-    story = v1.Story.where(ID="Story:9135051")
-    for s in story:
-      print(s.Name)
-    print("*"*40)
     story = v1.Story.find(find_statement)
     for s in story:
-      print(s.Name)
+      s.Owners = v1.Member.where(Name='Vacha Dave')
+      v1.commit()  # flushes all pending updates to the server
+      print(s.Name, s._v1_oid, [owner.Name for owner in s.Owners])
   # stories = v1.Story.filter(f"CreateDate>='{datetime.now() - timedelta(days=30)}'") # internal numeric ID
 
   # try:
